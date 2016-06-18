@@ -26,13 +26,34 @@ limitations under the License.
 
 #ifdef _MSC_VER
     #pragma warning(disable: 4530) // C++ exception handler used, but unwind semantics are not enabled
+#dedine HASCODECVT
 #endif
 
 #include "../../include/Logging_Tools.h"
 #ifndef __GNUC__
 #	include <filesystem>
 #endif
+#if HASCODECVT
 #include <codecvt>
+#else
+
+#include <boost/locale/encoding_utf.hpp>
+#include <string>
+
+using boost::locale::conv::utf_to_utf;
+
+std::wstring utf8_to_wstring(const std::string& str)
+{
+    return utf_to_utf<wchar_t>(str.c_str(), str.c_str() + str.size());
+}
+
+std::string wstring_to_utf8(const std::wstring& str)
+{
+    return utf_to_utf<char>(str.c_str(), str.c_str() + str.size());
+}  
+
+
+#endif
 #include <time.h>
 #include <assert.h>
 #if defined(_WIN32)

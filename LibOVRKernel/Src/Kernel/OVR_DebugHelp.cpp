@@ -1366,14 +1366,18 @@ size_t SymbolLookup::GetBacktrace(void* addressArray[], size_t addressArrayCapac
                         // expectations set here: https://blogs.msdn.microsoft.com/oldnewthing/20150205-00/?p=44743.
                         // This code only executes in debugging situations and so should not be an issue for the large majority of 
                         // end users. It's not safe in general in shipping applications to suspend threads.
+#ifdef HASTRYEXCEPT
                         __try{
+#endif                            
                             VOID*   handlerData = nullptr;
                             ULONG64 establisherFramePointers[2] = { 0, 0 };
                             RtlVirtualUnwind(UNW_FLAG_NHANDLER, imageBase, context.Rip, pRuntimeFunction, &context, &handlerData,  establisherFramePointers, nullptr);
+#ifdef HASTRYEXCEPT
                         }
                         __except(GetExceptionCode() == 0x406D1388 /*set thread name*/ ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_EXECUTE_HANDLER){
                             break; // If you encounter this under a debugger, just continue and let this code eat the exception.
                         }
+#endif                        
                     }
                     else
                     {
@@ -3338,6 +3342,7 @@ void ExceptionHandler::WriteReport(const char* reportType)
         ::DeregisterEventSource(hEventSource);
     }
 #endif
+            IWbemClassObject* pObj = nullptr;
 
     LogFile = fopen(reportFilePathActual, "w");
     OVR_ASSERT(LogFile != nullptr);
@@ -3539,7 +3544,6 @@ void ExceptionHandler::WriteReport(const char* reportType)
                 goto End;
 
             ULONG uReturned;
-            IWbemClassObject* pObj = nullptr;
             hr = pEnum->Next(WBEM_INFINITE, 1, &pObj, &uReturned);
             if(FAILED(hr))
                 goto End;
